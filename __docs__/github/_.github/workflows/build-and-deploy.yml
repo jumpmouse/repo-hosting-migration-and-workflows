@@ -1,0 +1,49 @@
+name: 03 Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment: dev|test|staging|prod1|prod2'
+        required: true
+        default: 'staging'
+      ref:
+        description: 'Tag or commit SHA to deploy (optional)'
+        required: false
+        default: ''
+      branch:
+        description: 'Branch if ref is empty (optional)'
+        required: false
+        default: ''
+      build:
+        description: 'Run build step'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_real:
+    if: inputs.build == true
+    uses: ./.github/workflows/_build-reusable.yml
+    with:
+      ref: ${{ inputs.ref }}
+      branch: ${{ inputs.branch }}
+      node_version: '20'
+
+  build_skip:
+    if: inputs.build == false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Skipping build per input"
+
+  deploy:
+    needs: [build_real, build_skip]
+    if: always() && (inputs.build == false || needs.build_real.result == 'success')
+    uses: ./.github/workflows/_deploy-reusable.yml
+    with:
+      environment: ${{ inputs.environment }}
+      ref: ${{ inputs.ref }}
+      branch: ${{ inputs.branch }}

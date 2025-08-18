@@ -1,0 +1,84 @@
+name: deploy-reusable
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment (dev, test, staging, prod1, prod2)'
+        required: true
+        type: string
+      ref:
+        description: 'Tag or commit SHA to deploy (if empty, use branch or default branch)'
+        required: false
+        type: string
+        default: ''
+      branch:
+        description: 'Branch to use when ref is empty (falls back to default branch)'
+        required: false
+        type: string
+        default: ''
+    outputs:
+      ref_to_deploy:
+        description: 'Resolved ref to deploy'
+        value: ${{ jobs.deploy.outputs.ref_to_deploy }}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    outputs:
+      ref_to_deploy: ${{ steps.pick.outputs.ref_to_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch
+        run: git fetch --all --prune --tags
+      - name: Pick ref
+        id: pick
+        shell: bash
+        env:
+          REF: ${{ inputs.ref }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          if [ -n "$REF" ]; then
+            if git rev-parse --verify "$REF^{commit}" >/dev/null 2>&1; then
+              echo "ref_to_deploy=$REF" >> "$GITHUB_OUTPUT"
+            else
+              echo "Provided ref '$REF' not found" >&2; exit 1;
+            fi
+          else
+            if [ -z "$BRANCH" ]; then
+              BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@' || true)
+              if [ -z "$BRANCH" ]; then BRANCH=main; fi
+            fi
+            if git rev-parse --verify "origin/$BRANCH^{commit}" >/dev/null 2>&1; then
+              echo "ref_to_deploy=origin/$BRANCH" >> "$GITHUB_OUTPUT"
+            else
+              echo "Branch '$BRANCH' not found" >&2; exit 1;
+            fi
+          fi
+      - name: Validate allowed deployers (global and per-env)
+        shell: bash
+        env:
+          GLOBAL: ${{ vars.ALLOWED_DEPLOYERS_GLOBAL || '' }}
+          ENV: ${{ vars.ALLOWED_DEPLOYERS || '' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GLOBAL$ENV" ]; then
+            echo "No allowlist vars set; skipping allowlist check"; exit 0;
+          fi
+          COMBINED=$(printf "%s,%s" "$GLOBAL" "$ENV" | sed 's/,\{2,\}/,/g; s/^,//; s/,$//')
+          IFS=',' read -ra USERS <<< "$COMBINED"
+          for u in "${USERS[@]}"; do [ "$u" = "${{ github.actor }}" ] && exit 0; done
+          echo "Actor '${{ github.actor }}' not allowed (GLOBAL='$GLOBAL' ENV='$ENV')" >&2
+          exit 1
+      - name: Deploy (placeholder)
+        run: |
+          echo "Deploying ref '${{ steps.pick.outputs.ref_to_deploy }}' to '${{ inputs.environment }}'"
+          # TODO: replace with real deployment command

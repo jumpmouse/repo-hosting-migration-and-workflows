@@ -1,0 +1,76 @@
+name: build-reusable
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Tag or commit SHA to build (if empty, use branch or default branch)'
+        required: false
+        type: string
+        default: ''
+      branch:
+        description: 'Branch to use when ref is empty (falls back to default branch)'
+        required: false
+        type: string
+        default: ''
+      node_version:
+        description: 'Node.js version'
+        required: false
+        type: string
+        default: '20'
+    outputs:
+      built_ref:
+        description: 'Resolved ref that was built'
+        value: ${{ jobs.build.outputs.ref_to_build }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build from ref
+    runs-on: ubuntu-latest
+    outputs:
+      ref_to_build: ${{ steps.pick.outputs.ref_to_build }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch
+        run: git fetch --all --prune --tags
+      - name: Pick ref
+        id: pick
+        shell: bash
+        env:
+          REF: ${{ inputs.ref }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          if [ -n "$REF" ]; then
+            if git rev-parse --verify "$REF^{commit}" >/dev/null 2>&1; then
+              echo "ref_to_build=$REF" >> "$GITHUB_OUTPUT"
+            else
+              echo "Provided ref '$REF' not found" >&2; exit 1;
+            fi
+          else
+            if [ -z "$BRANCH" ]; then
+              BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@' || true)
+              if [ -z "$BRANCH" ]; then BRANCH=main; fi
+            fi
+            if git rev-parse --verify "origin/$BRANCH^{commit}" >/dev/null 2>&1; then
+              echo "ref_to_build=origin/$BRANCH" >> "$GITHUB_OUTPUT"
+            else
+              echo "Branch '$BRANCH' not found" >&2; exit 1;
+            fi
+          fi
+      - name: Checkout ref
+        run: |
+          git checkout --detach "${{ steps.pick.outputs.ref_to_build }}"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build

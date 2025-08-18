@@ -1,0 +1,181 @@
+name: 04 Hotfix to Prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target environment(s): prod1, prod2, or both'
+        required: true
+        default: 'prod1'
+      source_ref:
+        description: 'Git ref (branch, tag, or SHA) to deploy. Defaults to target branch.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hotfix-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  guard-allowlist:
+    name: Check actor allowlist (optional)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate allowed deployers
+        shell: bash
+        env:
+          ALLOWED: ${{ vars.ALLOWED_DEPLOYERS || '' }}
+        run: |
+          if [ -z "$ALLOWED" ]; then
+            echo "No ALLOWED_DEPLOYERS var set; skipping allowlist check"; exit 0;
+          fi
+          IFS=',' read -ra USERS <<< "$ALLOWED"
+          for u in "${USERS[@]}"; do [ "$u" = "${{ github.actor }}" ] && exit 0; done
+          echo "Actor '${{ github.actor }}' not allowed (ALLOWED_DEPLOYERS=$ALLOWED)" >&2
+          exit 1
+
+  resolve-ref:
+    name: Resolve ref to deploy
+    needs: guard-allowlist
+    runs-on: ubuntu-latest
+    outputs:
+      ref_to_deploy: ${{ steps.pick.outputs.ref_to_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch
+        run: git fetch --all --prune
+      - name: Pick ref
+        id: pick
+        shell: bash
+        env:
+          SRC: ${{ inputs.source_ref }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            prod1|prod2|both) ;;
+            *) echo "Invalid target '$TARGET'. Use prod1, prod2, or both." >&2; exit 1;;
+          esac
+          if [ -n "$SRC" ]; then
+            # Validate ref exists
+            if git rev-parse --verify "$SRC^{commit}" >/dev/null 2>&1; then
+              REF="$SRC"
+            else
+              echo "source_ref '$SRC' not found" >&2; exit 1;
+            fi
+          else
+            # Default to the target branch (prod1 or prod2). If both, prefer prod1.
+            if [ "$TARGET" = "both" ]; then DEF=prod1; else DEF="$TARGET"; fi
+            REF="origin/$DEF"
+          fi
+          echo "ref_to_deploy=$REF" >> "$GITHUB_OUTPUT"
+
+  tag-hotfix:
+    name: Create hotfix tag (vX.Y.Z+hotfix.N)
+    needs: resolve-ref
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch
+        run: git fetch --all --prune --tags
+      - name: Compute base version and next hotfix tag
+        id: compute
+        shell: bash
+        env:
+          REF: ${{ needs.resolve-ref.outputs.ref_to_deploy }}
+        run: |
+          set -euo pipefail
+          # Resolve commit for REF
+          if ! git rev-parse --verify "$REF^{commit}" >/dev/null 2>&1; then
+            echo "Ref $REF not found" >&2; exit 1;
+          fi
+          COMMIT=$(git rev-parse "$REF^{commit}")
+          # Find nearest release tag vX.Y.Z reachable from COMMIT; fallback to latest v* tag
+          BASE_TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' "$COMMIT" 2>/dev/null || true)
+          if [ -z "$BASE_TAG" ]; then
+            BASE_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
+          fi
+          if [ -z "$BASE_TAG" ]; then
+            echo "No base release tag (vX.Y.Z) found to hotfix" >&2; exit 1;
+          fi
+          # Determine next hotfix number
+          NEXT=1
+          EXISTING=$(git tag -l "${BASE_TAG}+hotfix.*" | sed -E 's@^.*\+hotfix\.([0-9]+)$@\1@' | sort -n | tail -n1 || true)
+          if [ -n "$EXISTING" ]; then NEXT=$((EXISTING+1)); fi
+          echo "base_tag=$BASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+      - name: Create and push hotfix tag
+        id: tag
+        shell: bash
+        env:
+          REF: ${{ needs.resolve-ref.outputs.ref_to_deploy }}
+          BASE: ${{ steps.compute.outputs.base_tag }}
+          NEXT: ${{ steps.compute.outputs.next }}
+        run: |
+          set -euo pipefail
+          COMMIT=$(git rev-parse "$REF^{commit}")
+          TAG="${BASE}+hotfix.${NEXT}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists" >&2; exit 1;
+          fi
+          git tag -a "$TAG" -m "Hotfix $TAG by ${GITHUB_ACTOR}" "$COMMIT"
+          git push origin "$TAG"
+          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+
+  gate-prod1:
+    if: inputs.target == 'prod1' || inputs.target == 'both'
+    name: Approval for prod1
+    needs: resolve-ref
+    runs-on: ubuntu-latest
+    environment: prod1
+    steps:
+      - name: Await approval prod1
+        run: echo "Approved to deploy to prod1"
+
+  gate-prod2:
+    if: inputs.target == 'prod2' || inputs.target == 'both'
+    name: Approval for prod2
+    needs: resolve-ref
+    runs-on: ubuntu-latest
+    environment: prod2
+    steps:
+      - name: Await approval prod2
+        run: echo "Approved to deploy to prod2"
+
+  build:
+    name: Build from selected ref
+    needs: [resolve-ref, tag-hotfix]
+    uses: ./.github/workflows/_build-reusable.yml
+    with:
+      ref: ${{ needs.tag-hotfix.outputs.tag_name }}
+      branch: ''
+      node_version: '20'
+
+  deploy-prod1:
+    if: inputs.target == 'prod1' || inputs.target == 'both'
+    name: Deploy to prod1
+    needs: [build, gate-prod1, resolve-ref, tag-hotfix]
+    uses: ./.github/workflows/_deploy-reusable.yml
+    with:
+      environment: prod1
+      ref: ${{ needs.tag-hotfix.outputs.tag_name }}
+      branch: ''
+
+  deploy-prod2:
+    if: inputs.target == 'prod2' || inputs.target == 'both'
+    name: Deploy to prod2
+    needs: [build, gate-prod2, resolve-ref, tag-hotfix]
+    uses: ./.github/workflows/_deploy-reusable.yml
+    with:
+      environment: prod2
+      ref: ${{ needs.tag-hotfix.outputs.tag_name }}
+      branch: ''

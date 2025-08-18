@@ -1,0 +1,39 @@
+name: 90 Deploy Dev/Test
+
+on:
+  push:
+    branches: [dev, test]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  test_lint:
+    if: github.actor != 'github-actions'
+    uses: ./.github/workflows/_test-lint-reusable.yml
+    with:
+      ref: ''
+      branch: ${{ github.ref_name }}
+      node_version: '20'
+
+  build:
+    if: github.actor != 'github-actions'
+    needs: test_lint
+    uses: ./.github/workflows/_build-reusable.yml
+    with:
+      ref: ''
+      branch: ${{ github.ref_name }}
+      node_version: '20'
+
+  deploy:
+    if: github.actor != 'github-actions'
+    needs: [build, test_lint]
+    uses: ./.github/workflows/_deploy-reusable.yml
+    with:
+      environment: ${{ github.ref_name }}
+      ref: ''
+      branch: ${{ github.ref_name }}

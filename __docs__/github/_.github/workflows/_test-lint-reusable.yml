@@ -1,0 +1,79 @@
+name: test-lint-reusable
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Tag or commit SHA to test (if empty, use branch or default)'
+        required: false
+        type: string
+        default: ''
+      branch:
+        description: 'Branch to use when ref is empty (falls back to default branch)'
+        required: false
+        type: string
+        default: ''
+      node_version:
+        description: 'Node.js version'
+        required: false
+        type: string
+        default: '20'
+    outputs:
+      tested_ref:
+        description: 'Resolved ref that was tested'
+        value: ${{ jobs.test.outputs.ref_to_test }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    outputs:
+      ref_to_test: ${{ steps.pick.outputs.ref_to_test }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch
+        run: git fetch --all --prune --tags
+      - name: Pick ref
+        id: pick
+        shell: bash
+        env:
+          REF: ${{ inputs.ref }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          if [ -n "$REF" ]; then
+            if git rev-parse --verify "$REF^{commit}" >/dev/null 2>&1; then
+              echo "ref_to_test=$REF" >> "$GITHUB_OUTPUT"
+            else
+              echo "Provided ref '$REF' not found" >&2; exit 1;
+            fi
+          else
+            if [ -z "$BRANCH" ]; then
+              BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@' || true)
+              if [ -z "$BRANCH" ]; then BRANCH=main; fi
+            fi
+            if git rev-parse --verify "origin/$BRANCH^{commit}" >/dev/null 2>&1; then
+              echo "ref_to_test=origin/$BRANCH" >> "$GITHUB_OUTPUT"
+            else
+              echo "Branch '$BRANCH' not found" >&2; exit 1;
+            fi
+          fi
+      - name: Checkout ref
+        run: |
+          git checkout --detach "${{ steps.pick.outputs.ref_to_test }}"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: |
+          if npm run | grep -qE '^\s*lint\s'; then npm run lint; else echo 'No lint script'; fi
+      - name: Test
+        run: npm test -- --ci

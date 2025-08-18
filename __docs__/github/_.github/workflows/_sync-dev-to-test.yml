@@ -1,0 +1,57 @@
+name: 91 Sync Dev→Test
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-dev-to-test
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity (actor)
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      - name: Fetch all branches
+        run: |
+          git fetch --all --prune
+
+      - name: Update test to mirror dev (prefer ff, fallback to force-with-lease)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Ensure we have local tracking for both
+          git checkout -B dev origin/dev
+          if git show-ref --verify --quiet refs/heads/test; then
+            git checkout test
+          else
+            git checkout -b test origin/test || git checkout -b test
+          fi
+
+          # Try fast-forward from dev into test
+          if git merge-base --is-ancestor origin/test origin/dev; then
+            git checkout test
+            git reset --hard origin/test
+            git merge --ff-only origin/dev
+            git push origin test
+          else
+            # Histories diverged; mirror dev to test
+            git checkout dev
+            git push --force-with-lease origin dev:test
+          fi
+
+      - name: Summary
+        run: echo "Synchronized 'test' to match 'dev'"
