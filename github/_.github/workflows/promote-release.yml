@@ -1,0 +1,222 @@
+name: 02 Promote Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Release branch to promote (format: release/vX.Y.Z)'
+        required: true
+      final_tag:
+        description: 'Ignored; tag is derived from release_branch as vX.Y.Z'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: promote-${{ inputs.release_branch }}
+  cancel-in-progress: false
+
+jobs:
+  guard-allowlist:
+    name: Check actor allowlist (optional)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate allowed deployers
+        shell: bash
+        env:
+          ALLOWED: ${{ vars.ALLOWED_DEPLOYERS || '' }}
+        run: |
+          if [ -z "$ALLOWED" ]; then
+            echo "No ALLOWED_DEPLOYERS var set; skipping allowlist check"; exit 0;
+          fi
+          IFS=',' read -ra USERS <<< "$ALLOWED"
+          for u in "${USERS[@]}"; do [ "$u" = "${{ github.actor }}" ] && exit 0; done
+          echo "Actor '${{ github.actor }}' not allowed (ALLOWED_DEPLOYERS=$ALLOWED)" >&2
+          exit 1
+
+  gate-release:
+    name: Approval to start release
+    needs: guard-allowlist
+    runs-on: ubuntu-latest
+    environment: [uat3, administrators]
+    steps:
+      - name: Await approval
+        run: echo "Approved to start release"
+
+  set-freeze:
+    name: Start freeze (best-effort)
+    needs: gate-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set RELEASE_FREEZE=1 via gh api (best-effort)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Try to set repo variable; ignore failures
+          gh api \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/variables/RELEASE_FREEZE" \
+            -f name='RELEASE_FREEZE' -f value='1' || \
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/variables" \
+            -f name='RELEASE_FREEZE' -f value='1' || true
+
+  tag-and-release:
+    name: Tag final and create GitHub Release
+    needs: set-freeze
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.compute_tag.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure git identity (actor)
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+      - name: Fetch
+        run: git fetch --all --prune
+
+      - name: Checkout release branch
+        run: |
+          git checkout -B "${{ inputs.release_branch }}" origin/"${{ inputs.release_branch }}"
+
+      - name: Compute final tag
+        id: compute_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR="${{ inputs.release_branch }}"
+          if ! echo "$BR" | grep -Eq '^release/v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "release_branch '$BR' must match release/vX.Y.Z" >&2; exit 1;
+          fi
+          VER=${BR#release/}
+          # VER is like v1.2.3 already
+          echo "tag_name=$VER" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        shell: bash
+        run: |
+          TAG=${{ steps.compute_tag.outputs.tag_name }}
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists"
+          else
+            git tag -a "$TAG" -m "Release $TAG by ${{ github.actor }}"
+            git push origin "$TAG"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.compute_tag.outputs.tag_name }}
+          name: ${{ steps.compute_tag.outputs.tag_name }}
+          generate_release_notes: true
+
+  sync-uat3:
+    name: Sync release into uat3 (squash)
+    needs: tag-and-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure git identity (actor)
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+      - name: Fetch
+        run: git fetch --all --prune
+      - name: Squash-merge release -> uat3 and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR="${{ inputs.release_branch }}"
+          git checkout -B uat3 origin/uat3 || git checkout -b uat3
+          git reset --hard
+          git merge --squash "origin/${BR}" || true
+          if git diff --cached --quiet; then
+            echo "No changes to squash from ${BR} into uat3; skipping commit."
+          else
+            MSG="Release ${{ needs.tag-and-release.outputs.tag_name }} by ${{ github.actor }}"
+            git commit -m "${MSG}"
+            git push origin HEAD:uat3
+          fi
+
+  build:
+    name: Build for prod
+    needs: sync-uat3
+    uses: ./.github/workflows/_build-reusable.yml
+    with:
+      environment: prod
+      ref: ${{ needs.tag-and-release.outputs.tag_name }}
+      branch: ''
+      node_version: '20'
+
+  deploy:
+    name: Deploy to prod (uat3)
+    needs: build
+    uses: ./.github/workflows/_deploy-reusable.yml
+    with:
+      environment: prod
+      ref: ${{ needs.tag-and-release.outputs.tag_name }}
+      branch: ''
+
+  merge-back-to-main:
+    name: Merge release back to main (after prod)
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure git identity (actor)
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+      - name: Fetch
+        run: git fetch --all --prune
+
+      - name: Merge release -> main (signoff)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B main origin/main || git checkout -b main
+          git merge --no-ff --no-edit -s recursive -X theirs --signoff "origin/${{ inputs.release_branch }}" || true
+          git push origin HEAD:main
+
+  delete-release-branch:
+    name: Delete release branch on remote (prod)
+    needs: merge-back-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete remote branch (best-effort)
+        run: |
+          set -euo pipefail
+          BR="${{ inputs.release_branch }}"
+          echo "Deleting origin/$BR to prevent future pushes/triggers..."
+          git ls-remote --exit-code --heads origin "$BR" >/dev/null 2>&1 && \
+            git push origin --delete "$BR" || \
+            echo "Branch $BR not found on remote; skipping"
+
+  clear-freeze:
+    name: Clear freeze (best-effort, prod)
+    needs: delete-release-branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unset RELEASE_FREEZE via gh api (best-effort)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api -X PATCH -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/variables/RELEASE_FREEZE" \
+            -f name='RELEASE_FREEZE' -f value='0' || true
