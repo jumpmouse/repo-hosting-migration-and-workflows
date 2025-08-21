@@ -1,0 +1,57 @@
+name: 11 PR Test & Lint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or commit SHA to test (required if 'branch' is empty)"
+        required: false
+        type: string
+        default: ''
+      branch:
+        description: "Branch to use when 'ref' is empty (required if 'ref' is empty)"
+        required: false
+        type: string
+        default: ''
+      node_version:
+        description: 'Node.js version'
+        required: false
+        type: string
+        default: '20'
+
+permissions:
+  contents: read
+
+jobs:
+  # Validate inputs for manual dispatch to ensure either ref or branch is provided
+  validate-inputs:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate ref or branch provided
+        run: |
+          if [ -z "${{ inputs.ref }}" ] && [ -z "${{ inputs.branch }}" ]; then
+            echo "Either 'ref' or 'branch' must be provided for workflow_dispatch." >&2
+            exit 1
+          fi
+
+  # PR-triggered run: test the exact commit from the PR
+  pr:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/_test-lint-reusable.yml
+    with:
+      ref: ${{ github.sha }}
+      branch: ''
+      node_version: '20'
+
+  # Manual run from UI with provided inputs
+  manual:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate-inputs
+    uses: ./.github/workflows/_test-lint-reusable.yml
+    with:
+      ref: ${{ inputs.ref }}
+      branch: ${{ inputs.branch }}
+      node_version: ${{ inputs.node_version }}

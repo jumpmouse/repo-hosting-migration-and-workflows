@@ -105,6 +105,8 @@ jobs:
         with:
           node-version: ${{ inputs.node_version }}
       - name: Install
+        working-directory: landOfTales
         run: npm ci
       - name: Build
+        working-directory: landOfTales
         run: npm run build
