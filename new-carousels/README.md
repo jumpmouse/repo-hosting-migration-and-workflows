@@ -3,6 +3,7 @@
 This folder contains all documentation related to the introduction of new carousel types in LoT.
 
 ## Contents
+- Phased plan: [phased-plan.md](./phased-plan.md)
 - Backend plan: [carousels-be-plan.md](./carousels-be-plan.md)
 - Frontend plan: [new-carousels-fe-plan.md](./new-carousels-fe-plan.md)
 - Phase 1 backend report: [carousels-phase1-report.md](./carousels-phase1-report.md)

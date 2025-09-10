@@ -5,6 +5,7 @@ Quick links:
 - Local setup and run: [LOCAL_SETUP.md](./LOCAL_SETUP.md)
 - Azurite blob sync guide: [AZURITE_SYNC.md](./AZURITE_SYNC.md)
 - New carousels:
+  - Phased plan: [new-carousels/phased-plan.md](./new-carousels/phased-plan.md)
   - Backend plan: [new-carousels/carousels-be-plan.md](./new-carousels/carousels-be-plan.md)
   - Frontend plan: [new-carousels/new-carousels-fe-plan.md](./new-carousels/new-carousels-fe-plan.md)
   - Phase 1 backend report: [new-carousels/carousels-phase1-report.md](./new-carousels/carousels-phase1-report.md)
