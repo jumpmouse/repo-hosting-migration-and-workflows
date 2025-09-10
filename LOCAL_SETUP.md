@@ -23,7 +23,7 @@ Use this once to prepare your machine. Then see “Day-to-day work”.
 - Trust HTTPS developer certs: `dotnet dev-certs https --trust` (macOS/Windows; Linux varies)
 - Ensure Docker is running.
 - Optional: make shell scripts executable (macOS/Linux): `chmod +x be-scripts/{mac,linux}/*.sh`
-- Optional: seed Azurite blobs later if you need real files (see `be-scripts/AZURITE_SYNC.md`).
+- Optional: seed Azurite blobs later if you need real files (see [AZURITE_SYNC.md](./AZURITE_SYNC.md)).
 
 ## Day-to-day work
 
@@ -85,7 +85,7 @@ The repo is preconfigured for:
 - Azure CLI (required for SAS generation and verification):
   - Install: https://learn.microsoft.com/cli/azure/install-azure-cli
 
-Blob sync (optional, for local blob content): see `be-scripts/AZURITE_SYNC.md`.
+Blob sync (optional, for local blob content): see [AZURITE_SYNC.md](./AZURITE_SYNC.md).
 
 ### One-time database creation (rarely needed)
 Migrations normally create the DB. If needed:
@@ -284,7 +284,7 @@ Scripts live in `be-scripts/windows/`.
 ./be-scripts/windows/Start-Api.ps1
 ```
 
-Optional: seed Azurite blob storage with real data (see `be-scripts/AZURITE_SYNC.md` for details):
+Optional: seed Azurite blob storage with real data (see [AZURITE_SYNC.md](./AZURITE_SYNC.md) for details):
 ```powershell
 ./be-scripts/windows/Seed-Azurite.ps1
 ```
@@ -334,7 +334,7 @@ be-scripts/linux/run_migrations.sh
 be-scripts/linux/start_api.sh
 ```
 
-Optional: seed Azurite blob storage with real data (see `be-scripts/AZURITE_SYNC.md` for details):
+Optional: seed Azurite blob storage with real data (see [AZURITE_SYNC.md](./AZURITE_SYNC.md) for details):
 ```bash
 be-scripts/linux/seed_azurite.sh
 ```
