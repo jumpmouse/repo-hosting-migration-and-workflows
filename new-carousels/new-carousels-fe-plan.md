@@ -113,7 +113,32 @@ This document outlines the changes required in the Angular frontend to support f
 1) Introduce types and configs in models and services (no UI yet).
 2) Admin: add `type` select and basic config forms; save to BE.
 3) Landing rendering: branch by `type` and integrate new components (port from `slick-carousel`).
-4) Optional: per-item presentation UI if BE provides storage.
+4) Phase 2.5: Per-item presentation UI (Featured/Header) using structured fields; persist to `CarouselAsset.presentationJson`.
+
+## Phase 2.5 — Per-item Presentation Editor (Admin)
+
+- Goal: Allow editors to override default, asset-derived fields for specific items in Featured/Header carousels without touching the global `Asset`.
+
+- Data model (FE):
+  - Extend `CarouselAssetDto` and `CarouselAssetPost` with `presentationJson?: string | null`.
+  - No freeform entry in UI; the JSON is only a transport to the backend. The Admin shows type-specific structured fields.
+
+- Services:
+  - Reuse existing `CarouselAssetService.update()` (POST `/CarouselAsset`) to send `{ id, carouselId, assetId, presentationJson }`.
+
+- UI behavior:
+  - In `carousel-asset-administration-edit`, show an "Edit presentation" icon next to each checked asset.
+  - Open `carousel-asset-presentation-edit` dialog:
+    - Featured item fields: `topLeftBadgeText`, `buttonLabel`, `assetTitle`, `shortDescription`, optional `subType`, `duration`, `meta1`, `meta2`, `tags`, and optional image overrides (`backgroundImageDesktop/Tablet/Mobile`, `featureImageDesktop/Tablet/Mobile`).
+    - Header item fields: `title`, `subtitle`, `ctaLabel`, `ctaHref`, optional `overlayOpacity`.
+    - Values are saved into `presentationJson` (stringified). Empty fields mean "use defaults from Asset".
+
+- Compatibility:
+  - Only shown for carousels of type `Featured` or `Header`.
+  - Legacy and other types have no per-item presentation UI.
+
+- Testing:
+  - Create Featured/Header carousel, add an asset, open presentation editor, set fields, save, reopen and verify values are persisted.
 
 ## Decisions and Clarifications
 

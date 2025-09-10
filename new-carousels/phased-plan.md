@@ -46,7 +46,7 @@ Links: [Backend plan](./carousels-be-plan.md), [Phase 1 report](./carousels-phas
   - In `carousel-administration-edit`: add a “Type” select.
   - Show a dynamic `config` sub-form depending on selected type (Standard/Featured/Header/Grid) with safe defaults.
   - Show the type in carousel list/grid views.
-  - (Optional, can be Phase 2.5) Per-item “presentation” editor for Featured/Header items to override asset-derived defaults.
+  - (Phase 2.5) Per-item “presentation” editor for Featured/Header items to override asset-derived defaults.
 
 - Testing
   - Unit tests for typing and form validation.
