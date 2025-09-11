@@ -23,19 +23,15 @@ This report documents the exact frontend work completed for Phase 2, with minor 
       - Before save: re-assert `isBookCarousel` from `type` and serialize `configJson`.
     - Dialog width standardized to 600px across Admin for consistency.
 
-- __Admin UI – Asset per-item presentation (Phase 2.5)__
-  - File: `libs/admin/.../asset-administration/components/carousel-asset-presentation-edit/`
-  - Added dialog to edit `presentationJson` for Featured/Header carousels.
-  - Per-item editing is available via pencils on the right panel list for Featured/Header types.
+- __Admin UI – Asset per-item presentation (Phase 2.5; planned)__
+  - Planned for a follow-up phase (2.5). Not implemented in this phase.
+  - Intended scope: dialog to edit `presentationJson` for Featured/Header carousels with type-specific fields.
 
 - __Admin UI – Asset list add/remove modal UX fix__
   - File: `libs/admin/.../asset-administration/components/carousel-asset-administration-edit/...`
   - Fixed checkbox “blink” by immediately syncing the FormArray item’s `checked` state before calling create/delete and refreshing filtered view.
 
-- __Admin UI – Right panel list improvements__
-  - File: `libs/admin/.../asset-administration/asset-administration.component.*`
-  - Ensured pencils are visible and OnPush change detection is triggered correctly when carousel type changes.
-  - Removed unused selection bindings and header-level “Edit Presentation” button in favor of per-row pencils.
+--
 
 - __Admin UI – Middle panel modal widths__
   - File: `libs/admin/.../carousel-administration/carousel-administration.component.ts`
