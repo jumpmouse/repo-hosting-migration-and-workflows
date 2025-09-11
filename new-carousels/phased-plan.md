@@ -32,7 +32,7 @@ Links: [Backend plan](./carousels-be-plan.md), [Phase 1 report](./carousels-phas
 
 ---
 
-## Phase 2 – Frontend authoring (models/services + Admin UI)
+## Phase 2 – Frontend authoring (models/services + Admin UI) — DONE
 
 - Models/types
   - Add `CarouselType` enum in shared models.
@@ -52,10 +52,11 @@ Links: [Backend plan](./carousels-be-plan.md), [Phase 1 report](./carousels-phas
   - Unit tests for typing and form validation.
   - E2E: create/update each type and verify persisted payloads.
 
-- Acceptance criteria
-  - Admin can author `type` and `config`. Existing carousels remain unaffected.
+- Acceptance criteria (met)
+  - Admin can author `type` and `config`.
+  - Existing carousels remain unaffected and remain backward compatible.
 
-Links: [Frontend plan](./new-carousels-fe-plan.md)
+Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels-phase2-report.md)
 
 ---
 
@@ -95,3 +96,15 @@ Links: [Frontend plan](./new-carousels-fe-plan.md)
 - Old FE continues to work with BE Phase 1 changes.
 - FE progressively adopts `type` and `config`; legacy `isBookCarousel` remains for a period.
 - Optional cleanup later to deprecate `IsBookCarousel` after full FE adoption.
+
+---
+
+## Phase 4 – Deprecate IsBookCarousel end-to-end (TBD)
+
+- Scope (draft):
+  - Remove `IsBookCarousel` from BE DTOs and DB schema; rely exclusively on `Type`.
+  - Remove FE boolean fallbacks; prefer `type` across Admin, Landing, Promo, and Search (where applicable).
+  - Update shared models to drop or mark `isBookCarousel` as deprecated.
+  - Migration: drop column and clean up indices/defaults.
+
+Links: Phase 4 plan (to be created)
