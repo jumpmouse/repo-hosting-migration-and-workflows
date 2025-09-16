@@ -60,30 +60,34 @@ Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels
 
 ---
 
-## Phase 3 – Frontend rendering (components + landing integration)
+## Phase 3 – Frontend rendering (components + integrate into existing pages)
 
-- Components
-  - Port from demo to main FE repo:
-    - `StandardCarousel`, `FeaturedAssetsCarousel`, `HeaderCarousel`, `StandardGrid`.
-  - Ensure inputs have safe defaults and perform responsive behavior.
+ - Components (in `libs/shared/src/lib/components/carousels/`)
+   - Use the V2 components already present in the repo:
+     - `lot-standard-carousel`, `lot-featured-assets-carousel`, `lot-header-carousel`, `lot-standard-grid`.
+   - Ensure inputs have safe defaults and perform responsive behavior.
 
-- Landing integration
-  - Branch by `carousel.type`:
-    - Legacy types → existing `lot-carousel`.
-    - Standard → `StandardCarousel`.
-    - Featured → `FeaturedAssetsCarousel`.
-    - Header → `HeaderCarousel` (additional carousel entry; do NOT replace category cover).
-    - Grid → `StandardGrid`.
+ - Integration (no new routes)
+   - Integrate V2 components directly into the existing Promo and Landing pages.
+   - No new routes will be introduced.
+
+ - Rendering logic
+   - On existing Promo and Landing pages, branch by `carousel.type`:
+     - Legacy types → existing `lot-carousel`.
+     - Standard → `lot-standard-carousel`.
+     - Featured → `lot-featured-assets-carousel`.
+     - Header → `lot-header-carousel` (additional carousel entry; do NOT replace category cover).
+     - Grid → `lot-standard-grid`.
 
 - Data mapping
   - Derive images/text from `Asset` (Feature/FeatureMobile, Thumbnail/ThumbnailMobile, BookBackground/AuthorsBg; title/summary/tags/playingTime).
   - Apply `PresentationJson` overrides when present.
 
-- QA
-  - Responsive checks (mobile/tablet/desktop), performance, accessibility, and regression on legacy.
+ - QA
+   - Responsive checks (mobile/tablet/desktop), performance, accessibility, and regression on legacy pages (no route changes).
 
-- Acceptance criteria
-  - New types render correctly with defaults; legacy rendering unchanged.
+ - Acceptance criteria
+   - New types render correctly with defaults on existing Promo and Landing pages; legacy behavior remains unchanged for legacy carousels.
 
 ---
 
@@ -99,7 +103,16 @@ Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels
 
 ---
 
-## Phase 4 – Deprecate IsBookCarousel end-to-end (TBD)
+## Phase 4 – Migrate legacy landing/promo to V2 components (dual-render by Type)
+
+- Scope
+  - Update Promo and Landing to support both legacy carousels and V2 components simultaneously, based on `Carousel.Type` received from BE.
+  - Legacy types render with the existing `lot-carousel`; new types map to the appropriate V2 components and options.
+- Links: Migration plan: `docs/new-carousels/carousels-phase4-migration-plan.md`
+
+---
+
+## Phase 5 – Deprecate IsBookCarousel end-to-end (TBD)
 
 - Scope (draft):
   - Remove `IsBookCarousel` from BE DTOs and DB schema; rely exclusively on `Type`.
@@ -107,4 +120,16 @@ Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels
   - Update shared models to drop or mark `isBookCarousel` as deprecated.
   - Migration: drop column and clean up indices/defaults.
 
-Links: Phase 4 plan (to be created)
+Links: Deprecation plan (existing document): `docs/new-carousels/carousels-phase4-plan.md`
+
+---
+
+## Deployment and safety
+- Sequence: BE first (with migration) → FE Phase 2 (admin) → FE Phase 3 (rendering).
+- Feature flags are optional; we can gate Phase 3 rendering if needed.
+- Always validate in staging/UAT; back up DB before running the migration in production.
+
+## Backward compatibility
+- Old FE continues to work with BE Phase 1 changes.
+- FE progressively adopts `type` and `config`; legacy `isBookCarousel` remains for a period.
+- Optional cleanup later to deprecate `IsBookCarousel` after full FE adoption.
