@@ -70,6 +70,7 @@ Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels
  - Integration (no new routes)
    - Integrate V2 components directly into the existing Promo and Landing pages.
    - No new routes will be introduced.
+   - Use `CarouselsDataMapperService` (shared) for all data transformations from API models to V2 component inputs; provided per component (no root DI) to avoid bloating components with mapping logic.
 
  - Rendering logic
    - On existing Promo and Landing pages, branch by `carousel.type`:

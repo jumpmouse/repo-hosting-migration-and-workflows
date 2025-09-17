@@ -80,8 +80,9 @@ Defaults: If a config property is absent, rely on the component’s built-in def
 
 ## Implementation plan (no route changes)
 1) Mapping utilities (shared)
-   - Create pure functions that transform `CarouselModel` + `AssetModel[]` into the specific V2 input shapes listed above.
-   - Apply `presentationJson` per item if present; otherwise derive from `Asset`.
+   - Use `CarouselsDataMapperService` in `libs/shared/src/lib/components/carousels/services/` to transform `CarouselModel` + `AssetModel[]` into the specific V2 input shapes listed above.
+   - The service applies `presentationJson` per item if present and derives everything else from `Asset`.
+   - DI: provide the service at component-level (no root DI) to keep scope local and avoid unintended global coupling.
 
 2) Promo page integration (`libs/public/.../promo/promo.component.{ts,html}`)
    - In the template, branch by `carousel.type`:
@@ -90,11 +91,90 @@ Defaults: If a config property is absent, rely on the component’s built-in def
      - Featured → `<lot-featured-assets-carousel ...>`.
      - Header → `<lot-header-carousel ...>`.
      - Grid → `<lot-standard-grid ...>`.
-   - Use mapping utilities to supply `assets` and component options from `configJson`.
+   - Use `CarouselsDataMapperService` to supply `assets` and component options from `configJson`.
 
 3) Landing page integration (`libs/content/.../landing/landing.component.{ts,html}`)
    - Apply the same branching and mapping approach.
    - Maintain existing cover image and scroll/animation logic; Header type acts as an additional carousel section, not a replacement for the cover.
+
+### Example: component-level DI and usage (Landing)
+
+TypeScript (partial):
+```ts
+import { inject } from '@angular/core';
+import { CarouselsDataMapperService } from '@land-of-tales/shared';
+
+export class LandingComponent {
+  private readonly mapper = inject(CarouselsDataMapperService);
+
+  standardConfig(c, i) { return this.mapper.getStandardConfig(c, i); }
+  gridConfig(c) { return this.mapper.getGridConfig(c); }
+  featuredConfig(c) { return this.mapper.getFeaturedConfig(c); }
+  headerConfig(c) { return this.mapper.getHeaderConfig(c); }
+
+  standardItems(c) { return this.mapper.mapStandardItems(c); }
+  featuredItems(categories, c) { return this.mapper.mapFeaturedAssets(categories); }
+  headerItems(categories) { return this.mapper.mapHeaderSlides(categories); }
+}
+```
+
+Template (partial):
+```html
+@for (carousel of landingCategoriesStore.carousels(); track carousel.name; let i = $index) {
+  @switch (carousel.type) {
+    @case (CarouselType.Standard) {
+      @let cfg = standardConfig(carousel, i);
+      <lot-standard-carousel
+        [assets]="standardItems(carousel)"
+        [assetType]="cfg.assetType"
+        [autoPlay]="cfg.autoPlay"
+        [autoPlaySpeed]="cfg.autoPlaySpeed"
+        [speed]="cfg.speed"
+        [loop]="cfg.loop"
+        [componentTitle]="cfg.componentTitle"
+        [componentTitleVisible]="cfg.componentTitleVisible"
+        [componentTitleColor]="cfg.componentTitleColor"
+        [backgroundColorOrImage]="cfg.backgroundColorOrImage"
+        [slidesPerViewDesktop]="cfg.slidesPerViewDesktop"
+        [slidesPerViewTablet]="cfg.slidesPerViewTablet"
+        [slidesPerViewMobile]="cfg.slidesPerViewMobile"
+        [buttonLabel]="cfg.buttonLabel" />
+    }
+    @case (CarouselType.Grid) {
+      @let cfg = gridConfig(carousel);
+      <lot-standard-grid
+        [assets]="standardItems(carousel)"
+        [componentTitle]="cfg.componentTitle"
+        [componentTitleVisible]="cfg.componentTitleVisible"
+        [componentTitleColor]="cfg.componentTitleColor"
+        [backgroundColorOrImage]="cfg.backgroundColorOrImage"
+        [buttonLabel]="cfg.buttonLabel" />
+    }
+    @case (CarouselType.Featured) {
+      @let cfg = featuredConfig(carousel);
+      <lot-featured-assets-carousel
+        [assets]="mapper.mapFeaturedAssets(landingCategoriesStore.categories())"
+        [autoPlay]="cfg.autoPlay"
+        [autoPlaySpeed]="cfg.autoPlaySpeed"
+        [speed]="cfg.speed"
+        [loop]="cfg.loop" />
+    }
+    @case (CarouselType.Header) {
+      @let cfg = headerConfig(carousel);
+      <lot-header-carousel
+        [assets]="mapper.mapHeaderSlides(landingCategoriesStore.categories())"
+        [autoplay]="cfg.autoplay"
+        [autoplaySpeed]="cfg.autoplaySpeed"
+        [arrows]="cfg.arrows"
+        [fade]="cfg.fade"
+        [infinite]="cfg.infinite" />
+    }
+    @default {
+      <lot-carousel ...legacy bindings...></lot-carousel>
+    }
+  }
+}
+```
 
 4) Backward compatibility
    - If `type` is missing (older data), continue to compute book behavior from legacy `isBookCarousel` in the interim.
