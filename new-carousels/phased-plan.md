@@ -64,7 +64,8 @@ Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels
 
  - Components (in `libs/shared/src/lib/components/carousels/`)
    - Use the V2 components already present in the repo:
-     - `lot-standard-carousel`, `lot-featured-assets-carousel`, `lot-header-carousel`, `lot-standard-grid`.
+     - `lot-standard-carousel`, `lot-featured-assets-carousel`, `lot-header-carousel`, `lot-standard-grid`, `lot-asset-group`.
+   - Note: `AssetGroup` is a separate section (not a `CarouselType`) but is rendered alongside other carousels on Promo/Landing.
    - Ensure inputs have safe defaults and perform responsive behavior.
 
  - Integration (no new routes)

@@ -7,6 +7,7 @@ Purpose: Centralize all data transformation from API models (`CategoryModel`, `C
 - `lot-standard-grid`
 - `lot-featured-assets-carousel` (and `lot-featured-assets`)
 - `lot-header-carousel`
+- `lot-asset-group` (section; not a CarouselType)
 
 The service ensures that components stay DRY and free of mapping logic. It can be provided per component (no root DI) to keep scope and lifecycle local.
 
@@ -41,6 +42,7 @@ The service ensures that components stay DRY and free of mapping logic. It can b
   - `buildFeaturedForCarousel(categories, carousel?)`
   - `buildStandardForCarousel(carousel?, index=0)`
   - `buildGridForCarousel(carousel?)`
+  - `buildAssetGroup(categories, overrides?)`
 
 ## Mapping rules
 - `presentationJson` (per asset) overrides any derived defaults. Unknown keys are merged onto the base shape.
@@ -48,6 +50,7 @@ The service ensures that components stay DRY and free of mapping logic. It can b
 - Featured/Header use `BookBackground`/`AuthorsBg` for background and `Feature` for foreground/title images when present.
 - If tablet-specific backgrounds are absent, desktop background is reused.
 - Titles default to `Asset ${id}` when metadata is not available.
+- AssetGroup items are derived from the first asset of each category’s first carousel; image uses ThumbnailMobile → Thumbnail fallback, title uses category name.
 
 ## DI usage (component-level)
 We provide the service per component to avoid global coupling and to match the user preference.
@@ -64,6 +67,18 @@ import { CarouselsDataMapperService } from '@land-of-tales/shared';
 export class LandingComponent {
   readonly mapper = inject(CarouselsDataMapperService);
 }
+```
+
+### AssetGroup (Landing/Promo)
+```html
+@let ag = mapper.buildAssetGroup(categories());
+<lot-asset-group
+  [assets]="ag.items"
+  [title]="ag.config.title"
+  [subtitle]="ag.config.subtitle"
+  [textColor]="ag.config.textColor"
+  [textColorHover]="ag.config.textColorHover"
+/>
 ```
 
 ## Examples
