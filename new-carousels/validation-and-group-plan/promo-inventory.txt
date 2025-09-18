@@ -1,0 +1,28 @@
+Type 2: count=1
+  sample.name: test carousel standard
+  sample.configJson.present: True
+  sample.configJson: 
+    {"assetType":"Book","autoPlay":true,"autoPlaySpeed":3000,"speed":500,"loop":true,"slidesPerViewDesktop":5,"slidesPerViewTablet":3,"slidesPerViewMobile":2,"componentTitle":"Standard Carousel","componentTitleVisible":true,"componentTitleColor":"#F8F8FF","backgroundColorOrImage":"#0d0d0d","showInfoPanelOnClick":true}
+  sample.assets.count: 4
+  sample.firstAsset.fileTypes: [2, 3, 4, 5]
+Type 3: count=1
+  sample.name: test featured carousel
+  sample.configJson.present: True
+  sample.configJson: 
+    {"assetType":"Books","autoPlay":true,"autoPlaySpeed":3000,"speed":500,"loop":true}
+  sample.assets.count: 4
+  sample.firstAsset.fileTypes: [2, 3, 4, 5]
+Type 4: count=1
+  sample.name: test header carousel
+  sample.configJson.present: True
+  sample.configJson: 
+    {"autoplay":true,"autoplaySpeed":3000,"arrows":false,"fade":true,"infinite":true}
+  sample.assets.count: 1
+  sample.firstAsset.fileTypes: [2, 3, 4, 5, 6]
+Type 5: count=1
+  sample.name: test grid carousel
+  sample.configJson.present: True
+  sample.configJson: 
+    {"assetType":"Animation","backgroundColorOrImage":"#0d0d0d","componentTitle":"Component title","componentTitleVisible":true,"componentTitleColor":"#F8F8FF","showInfoPanelOnClick":true,"columnsDesktop":6,"columnsTablet":4,"columnsMobile":2,"gutter":16,"buttonLabel":null}
+  sample.assets.count: 3
+  sample.firstAsset.fileTypes: [2, 3, 4, 5]

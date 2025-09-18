@@ -1,0 +1,15 @@
+{
+  "assetType": "Book",
+  "autoPlay": true,
+  "autoPlaySpeed": 3000,
+  "speed": 500,
+  "loop": true,
+  "slidesPerViewDesktop": 5,
+  "slidesPerViewTablet": 3,
+  "slidesPerViewMobile": 2,
+  "componentTitle": "Standard Carousel",
+  "componentTitleVisible": true,
+  "componentTitleColor": "#F8F8FF",
+  "backgroundColorOrImage": "#0d0d0d",
+  "showInfoPanelOnClick": true
+}

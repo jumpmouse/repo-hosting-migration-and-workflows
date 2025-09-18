@@ -1,0 +1,40 @@
+{
+  "id": "2a24d2eb-175f-4fb6-b628-029ed8885541",
+  "files": [
+    {
+      "name": "fb9ffdab-be78-4098-aa05-83683819fab5.webp",
+      "originalName": null,
+      "type": 4,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/covers/fb9ffdab-be78-4098-aa05-83683819fab5.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "78f8706d-919e-4855-9ebd-03ecad8d6f49.webp",
+      "originalName": null,
+      "type": 5,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/covers-mobile/78f8706d-919e-4855-9ebd-03ecad8d6f49.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "49038032-eac0-47df-bc39-3ece41ec3990.webp",
+      "originalName": null,
+      "type": 2,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/thumbs/49038032-eac0-47df-bc39-3ece41ec3990.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "72b881d0-23a1-4920-80dc-643ac51e6c45.webp",
+      "originalName": null,
+      "type": 3,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/thumbs-mobile/72b881d0-23a1-4920-80dc-643ac51e6c45.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "59ad4d1a-359b-48e6-bb4d-88f28de87766.mp4",
+      "originalName": "video_index.mp4",
+      "type": 6,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/video/59ad4d1a-359b-48e6-bb4d-88f28de87766.mp4",
+      "streamUrl": "http://127.0.0.1:10000/devstoreaccount1/video-private/59ad4d1a-359b-48e6-bb4d-88f28de87766.mp4"
+    }
+  ]
+}

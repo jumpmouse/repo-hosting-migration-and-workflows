@@ -1,0 +1,33 @@
+{
+  "id": "8002ff69-03f2-418a-ae12-02e39c784f4a",
+  "files": [
+    {
+      "name": "TwoLittleCrabs-Mobile-Cover.webp",
+      "originalName": "TwoLittleCrabs-Mobile-Cover.webp",
+      "type": 5,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/covers-mobile/TwoLittleCrabs-Mobile-Cover.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "TwoLittleCrabs-Mobile-Thumb.webp",
+      "originalName": "TwoLittleCrabs-Mobile-Thumb.webp",
+      "type": 3,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/thumbs-mobile/TwoLittleCrabs-Mobile-Thumb.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "TwoLittleCrabs-Thumb.webp",
+      "originalName": "TwoLittleCrabs-Thumb.webp",
+      "type": 2,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/thumbs/TwoLittleCrabs-Thumb.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "TwoLittleCrabs-Cover.webp",
+      "originalName": "TwoLittleCrabs-Cover.webp",
+      "type": 4,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/covers/TwoLittleCrabs-Cover.webp",
+      "streamUrl": null
+    }
+  ]
+}

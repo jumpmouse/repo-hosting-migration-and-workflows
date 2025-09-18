@@ -1,0 +1,33 @@
+{
+  "id": "a8d8a488-07ec-43ef-8b6d-1e25ca97bd09",
+  "files": [
+    {
+      "name": "625624fe-3125-4468-8074-a5d05b1af993.webp",
+      "originalName": "DorothyMeetsTheWickedWitch-Cover.webp",
+      "type": 4,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/covers/625624fe-3125-4468-8074-a5d05b1af993.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "218a8303-647a-42a7-8db4-2684d45d993b.webp",
+      "originalName": "DorothyMeetsTheWickedWitch-Mobile-Cover.webp",
+      "type": 5,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/covers-mobile/218a8303-647a-42a7-8db4-2684d45d993b.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "80d3b829-85ff-4e5b-887b-119517cc47bd.webp",
+      "originalName": "DorothyMeetsTheWickedWitch-Thumb.webp",
+      "type": 2,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/thumbs/80d3b829-85ff-4e5b-887b-119517cc47bd.webp",
+      "streamUrl": null
+    },
+    {
+      "name": "fe19674d-1e40-43f8-b050-fa10ad4dee1b.webp",
+      "originalName": "DorothyMeetsTheWickedWitch-Mobile-Thumb.webp",
+      "type": 3,
+      "url": "http://127.0.0.1:10000/devstoreaccount1/content/thumbs-mobile/fe19674d-1e40-43f8-b050-fa10ad4dee1b.webp",
+      "streamUrl": null
+    }
+  ]
+}
