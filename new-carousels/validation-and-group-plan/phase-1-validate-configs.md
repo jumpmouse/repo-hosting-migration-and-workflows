@@ -271,3 +271,29 @@ Once added, rerun capture of `GET /api/Category/Promo` and complete P1-C02..P1-C
 ### Action (P1-C06)
 - Extend `GridConfig` interface and `getGridConfig()` to parse and pass through `columnsDesktop`, `columnsTablet`, `columnsMobile`, and `gutter`.
 - One-change-one-commit, mapper-only fix.
+
+---
+
+## Phase 1 Conclusion — DoD
+
+- Verified with live Promo data (all four V2 types present):
+  - Header (4): config parsed and items mapped; background/title image/text populated from category and asset files
+  - Featured (3): config parsed and items mapped; background + feature images deriving; primary button wired
+  - Standard (2): config parsed (assetType Book); items mapped; behavior respects `showInfoPanelOnClick`
+  - Grid (5): items mapped; initial config discrepancy identified and fixed
+
+- Mapper-only fix applied (P1-C06):
+  - `GridConfig` extended with `columnsDesktop`, `columnsTablet`, `columnsMobile`, `gutter`
+  - `getGridConfig()` updated to pass-through these from `configJson`
+
+- Open issues carried forward:
+  - Phase 2 (outputs/UX):
+    - Wire header actions with Angular `(click)` instead of Bootstrap data attributes
+    - Wire title clicks to open modal (Standard/Grid)
+    - Ensure `showInfoPanelOnClick === false` opens Asset Info modal
+    - Hide primary CTA if no actionable media link (mapper-derived flags)
+  - Phase 4 (content correctness):
+    - Header/Featured currently present an incorrect title placeholder (e.g., derived id). Should render human-readable asset title.
+    - Consolidate exact field sources for titles/subtitles across carousels and standardize fallback rules
+
+Status: Phase 1 DoD met. Evidence and payload samples are committed in this folder. Remaining items are scheduled in Phase 2 and Phase 4.

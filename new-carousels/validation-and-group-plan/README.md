@@ -17,6 +17,7 @@ Phases
 - Phase 1: Validate Admin configurations end-to-end (BE → DB → API → FE mapper → Components)
 - Phase 2: Validate outputs/click handlers and unify UX rules across V2 carousels
 - Phase 3: Add Asset Group as a new carousel type (BE + Admin + FE)
+- Phase 4: Verify content correctness (ensure presented data matches product expectations; e.g., titles, subtitles, labels)
 
 Definitions of Done (DoD)
 - Phase 1 DoD:
