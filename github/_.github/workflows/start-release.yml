@@ -41,7 +41,7 @@ jobs:
     name: Approval to start release
     needs: guard-allowlist
     runs-on: ubuntu-latest
-    environment: uat3
+    environment: production
     steps:
       - name: Await approval
         run: echo "Approved to start release"
@@ -64,7 +64,7 @@ jobs:
           git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
 
       - name: Fetch
-        run: git fetch --all --prune
+        run: git fetch --prune --tags --force
 
       - name: Compute next SemVer (optional input) and names
         id: names
@@ -74,14 +74,14 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$VERSION" ]; then
-            # find latest release tag vX.Y.Z
-            LATEST=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
+            # Find latest clean SemVer tag vX.Y.Z (exclude pre-release/suffixes)
+            LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)
             if [ -z "$LATEST" ]; then
               VERSION="0.0.1"
             else
-              MAJOR=$(echo "$LATEST" | sed -E 's/^v([0-9]+)\..*$/\1/')
-              MINOR=$(echo "$LATEST" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
-              PATCH=$(echo "$LATEST" | sed -E 's/^v[0-9]+\.[0-9]+\.([0-9]+)$/\1/')
+              # Strip leading 'v' and split into MAJOR.MINOR.PATCH
+              ver_no_v=${LATEST#v}
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$ver_no_v"
               PATCH=$((PATCH+1))
               VERSION="$MAJOR.$MINOR.$PATCH"
             fi
@@ -94,6 +94,16 @@ jobs:
           RC="v$VERSION-rc.1"
           echo "branch=$BR" >> "$GITHUB_OUTPUT"
           echo "rc=$RC" >> "$GITHUB_OUTPUT"
+
+      - name: Guard - release branch must not already exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR=${{ steps.names.outputs.branch }}
+          if git ls-remote --exit-code --heads origin "$BR" >/dev/null 2>&1; then
+            echo "Branch $BR already exists on origin. Aborting to avoid overwrite." >&2
+            exit 1
+          fi
 
       - name: Create and push release branch from base
         run: |
@@ -121,11 +131,11 @@ jobs:
       branch: ${{ needs.create-branch-and-tag.outputs.branch }}
       node_version: '20'
 
-  deploy-staging:
-    name: Deploy to staging (from release branch)
-    needs: build-staging
-    uses: ./.github/workflows/_deploy-reusable.yml
-    with:
-      environment: staging
-      ref: ''
-      branch: ${{ needs.create-branch-and-tag.outputs.branch }}
+  # deploy-staging:
+  #   name: Deploy to staging (from release branch)
+  #   needs: build-staging
+  #   uses: ./.github/workflows/_deploy-reusable.yml
+  #   with:
+  #     environment: staging
+  #     ref: ''
+  #     branch: ${{ needs.create-branch-and-tag.outputs.branch }}

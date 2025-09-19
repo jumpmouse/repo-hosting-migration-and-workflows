@@ -1,8 +1,9 @@
 name: 90 Deploy Dev/Test
 
 on:
-  push:
-    branches: [dev, test]
+  workflow_dispatch:
+  # push:
+    # branches: [dev, test]
 
 permissions:
   contents: read
@@ -30,11 +31,11 @@ jobs:
       branch: ${{ github.ref_name }}
       node_version: '20'
 
-  deploy:
-    if: github.actor != 'github-actions'
-    needs: [build, test_lint]
-    uses: ./.github/workflows/_deploy-reusable.yml
-    with:
-      environment: ${{ github.ref_name }}
-      ref: ''
-      branch: ${{ github.ref_name }}
+  # deploy:
+  #   if: github.actor != 'github-actions'
+  #   needs: [build, test_lint]
+  #   uses: ./.github/workflows/_deploy-reusable.yml
+  #   with:
+  #     environment: ${{ github.ref_name }}
+  #     ref: ''
+  #     branch: ${{ github.ref_name }}

@@ -42,7 +42,7 @@ jobs:
     name: Approval to start release
     needs: guard-allowlist
     runs-on: ubuntu-latest
-    environment: uat3
+    environment: production
     steps:
       - name: Await approval
         run: echo "Approved to start release"
@@ -162,7 +162,7 @@ jobs:
           generate_release_notes: true
 
   sync-uat3:
-    name: Sync release into uat3 (squash)
+    name: Sync release into production branch (uat3) (squash)
     needs: [tag-and-release, resolve-release-branch]
     runs-on: ubuntu-latest
     steps:
@@ -199,26 +199,26 @@ jobs:
           fi
 
   build:
-    name: Build for prod
+    name: Build for production
     needs: sync-uat3
     uses: ./.github/workflows/_build-reusable.yml
     with:
-      environment: prod
+      environment: production
       ref: ${{ needs.tag-and-release.outputs.tag_name }}
       branch: ''
       node_version: '20'
 
   deploy:
-    name: Deploy to prod (uat3)
+    name: Deploy to production
     needs: build
     uses: ./.github/workflows/_deploy-reusable.yml
     with:
-      environment: prod
+      environment: production
       ref: ${{ needs.tag-and-release.outputs.tag_name }}
       branch: ''
 
   merge-back-to-main:
-    name: Merge release back to main (after prod)
+    name: Merge release back to main (after production)
     needs: [deploy, resolve-release-branch]
     runs-on: ubuntu-latest
     steps:
@@ -251,7 +251,7 @@ jobs:
           fi
 
   delete-release-branch:
-    name: Delete release branch on remote (prod)
+    name: Delete release branch on remote (production)
     needs: [merge-back-to-main, resolve-release-branch]
     runs-on: ubuntu-latest
     steps:

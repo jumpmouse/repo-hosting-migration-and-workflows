@@ -5,7 +5,7 @@ Source YAML: ../../../.github/workflows/_build-reusable.yml
 ## Interface
 - on: workflow_call
 - inputs:
-  - environment: dev|test|staging|prod (required)
+  - environment: dev|test|staging|production (required)
   - ref: explicit tag/SHA (optional)
   - branch: branch when ref is empty (optional)
   - node_version: default 20
@@ -21,7 +21,7 @@ Source YAML: ../../../.github/workflows/_build-reusable.yml
       dev) BRANCH=dev;;
       test) BRANCH=test;;
       staging) BRANCH=$(latest release/v* by SemVer);; 
-      prod) BRANCH=uat3;;
+      production) BRANCH=uat3;;
     esac
   fi
   echo ref_to_build=origin/$BRANCH

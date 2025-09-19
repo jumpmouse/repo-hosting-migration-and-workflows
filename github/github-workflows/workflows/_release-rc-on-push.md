@@ -3,7 +3,7 @@
 Source YAML: ../../../.github/workflows/_release-rc-on-push.yml
 
 ## Purpose
-On push to `release/vX.Y.Z`, tag next RC `vX.Y.Z-rc.N` if not frozen, then build and deploy to staging.
+On push to `release/vX.Y.Z`, tag next RC `vX.Y.Z-rc.N` if not frozen.
 
 ## Trigger
 - push: branches matching `release/**`
@@ -19,10 +19,6 @@ On push to `release/vX.Y.Z`, tag next RC `vX.Y.Z-rc.N` if not frozen, then build
 ## Jobs
 - tag-rc
   - Compute next RC for the branch and push the tag.
-- build-staging (reusable)
-  - Builds with `environment: staging`, `ref: RC tag`.
-- deploy-staging (reusable)
-  - Deploys with `environment: staging`, `ref: RC tag`.
 
 ## Snippet
 ```bash

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment: dev|test|staging|prod'
+        description: 'Environment: dev|test|staging|production'
         required: true
         default: 'staging'
       ref:
@@ -45,11 +45,11 @@ jobs:
     steps:
       - run: echo "Skipping build per input"
 
-  deploy:
-    needs: [build_real, build_skip]
-    if: inputs.deploy == true && (inputs.build == false || needs.build_real.result == 'success')
-    uses: ./.github/workflows/_deploy-reusable.yml
-    with:
-      environment: ${{ inputs.environment }}
-      ref: ${{ inputs.ref }}
-      branch: ${{ inputs.branch }}
+  # deploy:
+  #   needs: [build_real, build_skip]
+  #   if: inputs.deploy == true && (inputs.build == false || needs.build_real.result == 'success')
+  #   uses: ./.github/workflows/_deploy-reusable.yml
+  #   with:
+  #     environment: ${{ inputs.environment }}
+  #     ref: ${{ inputs.ref }}
+  #     branch: ${{ inputs.branch }}

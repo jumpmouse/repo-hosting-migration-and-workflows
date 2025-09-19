@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       environment:
-        description: 'Target environment (dev, test, staging, prod)'
+        description: 'Target environment (dev, test, staging, production)'
         required: true
         type: string
         default: 'staging'
@@ -53,8 +53,8 @@ jobs:
         run: |
           set -euo pipefail
           case "$ENV" in
-            dev|test|staging|prod) ;;
-            *) echo "Invalid environment '$ENV'. Must be one of dev,test,staging,prod" >&2; exit 1;;
+            dev|test|staging|production) ;;
+            *) echo "Invalid environment '$ENV'. Must be one of dev,test,staging,production" >&2; exit 1;;
           esac
 
           if [ -n "$REF" ]; then
@@ -85,7 +85,7 @@ jobs:
                 fi
                 BRANCH="$LATEST"
                 ;;
-              prod)
+              production)
                 BRANCH="uat3"
                 ;;
             esac

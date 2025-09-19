@@ -127,29 +127,29 @@ jobs:
           echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
 
   gate-prod:
-    name: Approval for prod (uat3)
+    name: Approval for production
     needs: resolve-ref
     runs-on: ubuntu-latest
-    environment: uat3
+    environment: production
     steps:
-      - name: Await approval prod
-        run: echo "Approved to deploy to prod (uat3)"
+      - name: Await approval
+        run: echo "Approved to deploy to production"
 
   build:
-    name: Build from selected ref
+    name: Build from selected ref (production)
     needs: [resolve-ref, tag-hotfix]
     uses: ./.github/workflows/_build-reusable.yml
     with:
-      environment: prod
+      environment: production
       ref: ${{ needs.tag-hotfix.outputs.tag_name }}
       branch: ''
       node_version: '20'
 
   deploy:
-    name: Deploy to prod (uat3)
+    name: Deploy to production
     needs: [build, gate-prod, resolve-ref, tag-hotfix]
     uses: ./.github/workflows/_deploy-reusable.yml
     with:
-      environment: prod
+      environment: production
       ref: ${{ needs.tag-hotfix.outputs.tag_name }}
       branch: ''

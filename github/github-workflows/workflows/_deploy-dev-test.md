@@ -3,7 +3,7 @@
 Source YAML: ../../../.github/workflows/_deploy-dev-test.yml
 
 ## Purpose
-On push to `dev` or `test`, run test+lint, build, and deploy to the same-named environment using reusables.
+On push to `dev` or `test`, run test+lint and build for the same-named branch using reusables. No deploy step.
 
 ## Trigger
 - push: branches [dev, test]
@@ -16,8 +16,6 @@ On push to `dev` or `test`, run test+lint, build, and deploy to the same-named e
   - Skips if actor is `github-actions` (avoids loops), tests the pushed branch.
 - build (reusable)
   - Needs test_lint, builds with environment equal to branch name.
-- deploy (reusable)
-  - Needs test_lint and build; deploys with environment equal to branch name.
 
 ## Related
 - Test/Lint reusable: ./_test-lint-reusable.md

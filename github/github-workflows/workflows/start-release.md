@@ -3,7 +3,7 @@
 Source YAML: ../../../.github/workflows/start-release.yml
 
 ## Purpose
-Creates a release branch `release/vX.Y.Z` from `test`, tags the first RC `vX.Y.Z-rc.1`, then builds and deploys to `staging` using reusable workflows.
+Creates a release branch `release/vX.Y.Z` from `test` and tags the first RC `vX.Y.Z-rc.1`. No staging deploys.
 
 ## Trigger
 - workflow_dispatch with inputs:
@@ -20,29 +20,23 @@ Creates a release branch `release/vX.Y.Z` from `test`, tags the first RC `vX.Y.Z
   - Skips if variable is not set.
 
 - gate-start (environment approval)
-  - environment: `uat3` ensures a single reviewer group approves starting a release.
+  - environment: `production` requests approval from the production approver group.
 
 - create-branch-and-tag
-  - Computes target version and names:
+  - Computes target version and names (robust SemVer bump):
     ```bash
-    # If inputs.version empty, compute next patch from latest vX.Y.Z
-    LATEST=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
-    VERSION=${LATEST:+$(echo "$LATEST" | sed -E 's/^v([0-9]+)\.([0-9]+)\.([0-9]+)$/\1.\2.\3/')}
-    # bump PATCH or default to 0.0.1
+    # If inputs.version empty, compute next patch from latest clean vX.Y.Z
+    LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)
+    if [ -z "$LATEST" ]; then VERSION="0.0.1"; else
+      ver_no_v=${LATEST#v}; IFS='.' read -r MAJOR MINOR PATCH <<< "$ver_no_v"; PATCH=$((PATCH+1)); VERSION="$MAJOR.$MINOR.$PATCH"; fi
     ```
   - Branch `release/vX.Y.Z` is created from `base_ref` and pushed.
   - RC tag `vX.Y.Z-rc.1` is annotated and pushed.
 
-- build-staging (reusable)
-  - uses `./.github/workflows/_build-reusable.yml`
-  - with: environment=staging, branch=`release/vX.Y.Z`, node_version=20.
-
-- deploy-staging (reusable)
-  - uses `./.github/workflows/_deploy-reusable.yml`
-  - with: environment=staging, branch=`release/vX.Y.Z`.
+  
 
 ## Approvals
-- Only the gate on `uat3` is used; deploy job uses `staging` environment.
+- Only the gate on `production` is used.
 
 ## Notes
 - Node 20 is standardized.

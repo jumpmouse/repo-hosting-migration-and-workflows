@@ -75,11 +75,11 @@ jobs:
       branch: ''
       node_version: '20'
 
-  deploy-staging:
-    if: github.actor != 'github-actions' && (vars.RELEASE_FREEZE || '0') != '1' && needs.tag-rc.outputs.rc != ''
-    needs: [tag-rc, build-staging]
-    uses: ./.github/workflows/_deploy-reusable.yml
-    with:
-      environment: staging
-      ref: ${{ needs.tag-rc.outputs.rc }}
-      branch: ''
+  # deploy-staging:
+  #   if: github.actor != 'github-actions' && (vars.RELEASE_FREEZE || '0') != '1' && needs.tag-rc.outputs.rc != ''
+  #   needs: [tag-rc, build-staging]
+  #   uses: ./.github/workflows/_deploy-reusable.yml
+  #   with:
+  #     environment: staging
+  #     ref: ${{ needs.tag-rc.outputs.rc }}
+  #     branch: ''

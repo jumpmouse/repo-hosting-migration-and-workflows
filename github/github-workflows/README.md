@@ -12,16 +12,16 @@ See also: [Naming & Structure](./naming-and-structure.md) • [Reusable Workflow
 
 ## Summary
 
-- Branch model: `dev`, `test`, `release/vX.Y.Z`, `staging`, `main`.
+- Branch model: `dev`, `test`, `release/vX.Y.Z`, `main`. The production branch is `uat3` (branch name only).
 - Production deploys are driven from `release/vX.Y.Z` and finalized tags `vX.Y.Z`.
-- Single approver group: approvals are enforced via the `uat3` environment for gates; deploy jobs use the environment provided by callers (see details below).
+- Approvals use the GitHub Environment named `production`. Do not use `uat3` as an environment; it is the branch name for production.
 - Reusable building blocks: `build-reusable.yml`, `deploy-reusable.yml`.
 - Node.js 20 for builds.
 
 Environments and approvals:
-- Start/Promote/Hotfix gates use `environment: uat3` to request approval from the same reviewer group.
-- Deploy jobs (via `deploy-reusable.yml`) set `environment: <input environment>`. Today callers pass `staging` or `prod`.
-- To truly keep a single approver group for prod deploys, either configure `prod` environment with the same reviewers as `uat3`, or call deploy with `environment: uat3` for prod. See notes in each flow.
+- Start/Promote/Hotfix gates use `environment: production` to request approval from the production reviewer group.
+- Deploy jobs (via `deploy-reusable.yml`) set `environment: production` for production deployments.
+- The production branch is `uat3`; workflows map the `production` environment to branch `uat3` where needed.
 
 Concurrency:
 - `start-release.yml`: `concurrency.group: start-release`.
@@ -63,13 +63,13 @@ Documentation (per workflow):
 <a id="senior"></a>
 ## 1) Senior/Concise
 
-- Start Release → creates `release/vX.Y.Z` from `test`, tags RC, builds and deploys to `staging`.
-  - Approvals: `gate-start` on `uat3`.
-- Promote Release → computes final `vX.Y.Z` from `release/vX.Y.Z`, creates GitHub Release, squash-merges into `uat3` (prod), builds, deploys to prod, merges back to `main`, cleans up branch, clears freeze.
-  - Approvals: no mid-workflow gate. Deploy job uses `environment: prod` (ensure `prod` environment approval matches the `uat3` reviewer group, or pass `uat3` as environment). Optional pre-tag `gate-release` may be wired.
-- Hotfix to Prod → picks ref (defaults to `origin/uat3`), tags `vX.Y.Z+hotfix.N`, builds, deploys.
-  - Approvals: `gate-prod` on `uat3`. Deploy job uses `environment: prod`.
-- Reusable deploy resolves branches by env: dev→`dev`, test→`test`, staging→latest `release/v*`, prod→`uat3`; if `ref` is set, it wins.
+- Start Release → creates `release/vX.Y.Z` from `test`, tags RC. No staging deploys.
+  - Approvals: `gate-start` on `production`.
+- Promote Release → computes final `vX.Y.Z` from `release/vX.Y.Z`, creates GitHub Release, squash-merges into `uat3` (production branch), builds, deploys to production, merges back to `main`, cleans up branch, clears freeze.
+  - Approvals: optional pre-tag `gate-release` on `production`.
+- Hotfix to Production → picks ref (defaults to `origin/uat3`), tags `vX.Y.Z+hotfix.N`, builds, deploys.
+  - Approvals: `gate-prod` on `production`.
+- Reusable deploy resolves branches by env: dev→`dev`, test→`test`, staging→latest `release/v*`, production→`uat3`; if `ref` is set, it wins.
 
 [Back to top](#top)
 
@@ -81,23 +81,21 @@ Documentation (per workflow):
 - Start Release (`start-release.yml`)
   - Inputs: `version` (optional), `base_ref` (default `test`).
   - Jobs:
-    - `guard-allowlist` (optional allowlist) → `gate-start` (env `uat3`) → `create-branch-and-tag` → `build-staging` → `deploy-staging`.
-  - Build/deploy use `build-reusable.yml` and `deploy-reusable.yml` with `environment: staging` and branch `release/vX.Y.Z`.
+    - `guard-allowlist` (optional allowlist) → `gate-start` (env `production`) → `create-branch-and-tag`.
 
 - Promote Release (`promote-release.yml`)
-  - Inputs: `release_branch` (e.g., `release/v1.2.3`).
+  - Inputs: `release_branch` (optional; auto-detects a single `release/*` if omitted).
   - Jobs:
-    - `guard-allowlist` → `set-freeze` → `tag-and-release` (compute `vX.Y.Z`, tag and GitHub Release) → `sync-uat3` (squash from `release/vX.Y.Z`) → `build` (with `environment: prod`, `ref: tag`) → `deploy` (with `environment: prod`, `ref: tag`) → `merge-back-to-main` → `delete-release-branch` → `clear-freeze`.
-  - Note: `gate-release` exists (env `uat3`). If you require approval before tagging, wire `set-freeze` or `tag-and-release` to depend on `gate-release`.
-  - Single approver group: either make `prod` environment share reviewers with `uat3`, or pass `environment: uat3` to deploy.
+    - `guard-allowlist` → `set-freeze` → `tag-and-release` (compute `vX.Y.Z`, tag and GitHub Release) → `sync-uat3` (squash from `release/vX.Y.Z`) → `build` (with `environment: production`, `ref: tag`) → `deploy` (with `environment: production`, `ref: tag`) → `merge-back-to-main` → `delete-release-branch` → `clear-freeze`.
+  - Note: `gate-release` exists (env `production`). If you require approval before tagging, wire `set-freeze` or `tag-and-release` to depend on `gate-release`.
 
 - Hotfix to Prod (`hotfix-to-prod.yml`)
   - Inputs: `source_ref` (optional); defaults to `origin/uat3`.
-  - Jobs: `guard-allowlist` → `resolve-ref` → `tag-hotfix` → `gate-prod` (env `uat3`) → `build` (env `prod`, `ref: hotfix tag`) → `deploy` (env `prod`, `ref: hotfix tag`).
+  - Jobs: `guard-allowlist` → `resolve-ref` → `tag-hotfix` → `gate-prod` (env `production`) → `build` (env `production`, `ref: hotfix tag`) → `deploy` (env `production`, `ref: hotfix tag`).
 
 - Reusable Workflows
   - Build (`build-reusable.yml`): picks `ref` or resolves branch by env; checks out, sets up Node 20, `npm ci`, `npm run build`.
-  - Deploy (`deploy-reusable.yml`): environment equals input; resolves `ref` or selects branch by env (prod→`uat3`), allowlist gate, placeholder deploy step.
+  - Deploy (`deploy-reusable.yml`): environment equals input; resolves `ref` or selects branch by env (production→`uat3`), allowlist gate, placeholder deploy step.
 
 [Back to top](#top)
 
@@ -106,26 +104,25 @@ Documentation (per workflow):
 <a id="step-by-step"></a>
 ## 3) Step-by-Step (Runbooks)
 
-- Start a release (staging cut)
+- Start a release
   1. Actions → run Start Release.
   2. Provide `version` or leave blank to auto-bump; leave `baseref` as `test` unless directed.
-  3. Approve `gate-start` in `uat3`.
+  3. Approve `gate-start` in `production`.
   4. Wait for branch creation and RC tag.
-  5. Wait for build and staging deploy to complete.
 
 - Promote to production
   1. Actions → run Promote Release.
-  2. Select `release/vX.Y.Z`.
-  3. Approve `gate-release` if wired to block (optional).
+  2. Select `release/vX.Y.Z` (or rely on auto-detect if exactly one exists).
+  3. Approve `gate-release` if wired to block (optional, environment `production`).
   4. The workflow syncs `release/vX.Y.Z` into `uat3` via squash-merge.
   5. Build runs against `ref: vX.Y.Z`.
-  6. Deploy runs with `environment: prod` (ensure the `prod` environment has the correct reviewer group; use `uat3` instead if you prefer a single environment).
+  6. Deploy runs with `environment: production`.
   7. After deploy, the workflow merges back to `main`, deletes the release branch, clears freeze.
 
 - Hotfix deployment
   1. Actions → run Hotfix to Prod.
   2. Optionally provide `source_ref` (tag, branch, or SHA); leave empty to use `origin/uat3`.
-  3. Approve `gate-prod` in `uat3`.
+  3. Approve `gate-prod` in `production`.
   4. Build and deploy proceed using the hotfix tag.
 
 [Back to top](#top)

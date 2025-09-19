@@ -6,7 +6,7 @@ description: Index for GitHub migration and setup guides
 
 Use this index to navigate the focused guides. All links are relative and the docs cross-link to each other and the end-to-end migration guide.
 
-> Note: Promotions to staging and production follow a release-branch strategy. `test` is auto-synced from `dev`; `staging` is updated only from `release/vX.Y.Z`; promotions to production run from the release branch. See: [Workflows Guide](./github-workflows/README.md), [Repo: Environments & Branch Protections](./github-repo-setup-environments.md), [Post‑Migration Setup](./github-post-migration-setup.md).
+> Note: Only production deployments are supported. Releases are prepared on `release/vX.Y.Z` and promoted to production from the release branch. The GitHub Environment is named `production`; the production branch is `uat3`. See: [Workflows Guide](./github-workflows/README.md), [Repo: Environments & Branch Protections](./github-repo-setup-environments.md), [Post‑Migration Setup](./github-post-migration-setup.md).
 
 ## Quick Links
 - [End-to-End Migration](./bitbucket-to-github-migration.md)

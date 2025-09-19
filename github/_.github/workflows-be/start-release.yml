@@ -41,7 +41,7 @@ jobs:
     name: Approval to start release
     needs: guard-allowlist
     runs-on: ubuntu-latest
-    environment: uat3
+    environment: production
     steps:
       - name: Await approval
         run: echo "Approved to start release"
@@ -131,11 +131,11 @@ jobs:
       branch: ${{ needs.create-branch-and-tag.outputs.branch }}
       node_version: '20'
 
-  deploy-staging:
-    name: Deploy to staging (from release branch)
-    needs: build-staging
-    uses: ./.github/workflows/_deploy-reusable.yml
-    with:
-      environment: staging
-      ref: ''
-      branch: ${{ needs.create-branch-and-tag.outputs.branch }}
+  # deploy-staging:
+  #   name: Deploy to staging (from release branch)
+  #   needs: build-staging
+  #   uses: ./.github/workflows/_deploy-reusable.yml
+  #   with:
+  #     environment: staging
+  #     ref: ''
+  #     branch: ${{ needs.create-branch-and-tag.outputs.branch }}

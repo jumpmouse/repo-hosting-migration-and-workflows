@@ -7,7 +7,7 @@ Deploy an urgent fix to production by tagging a hotfix from a chosen ref and run
 
 ## Trigger
 - workflow_dispatch with input:
-  - source_ref: optional tag/branch/SHA; defaults to `origin/uat3`.
+  - source_ref: optional tag/branch/SHA; defaults to `origin/uat3` (production branch).
 
 ## Permissions and Concurrency
 - permissions: contents: write
@@ -30,10 +30,10 @@ Deploy an urgent fix to production by tagging a hotfix from a chosen ref and run
   - Creates annotated tag and pushes.
 
 - gate-prod
-  - environment: `uat3` to reuse prod approver group.
+  - environment: `production` to request approval from production approvers.
 
 - build / deploy (reusable)
-  - Build + Deploy using `environment: prod`, `ref: hotfix tag`.
+  - Build + Deploy using `environment: production`, `ref: hotfix tag`.
 
 ## Related
 - Build reusable: ./_build-reusable.md
