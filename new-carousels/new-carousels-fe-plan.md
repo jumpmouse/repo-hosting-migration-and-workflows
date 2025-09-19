@@ -130,7 +130,7 @@ This document outlines the changes required in the Angular frontend to support f
   - In `carousel-asset-administration-edit`, show an "Edit presentation" icon next to each checked asset.
   - Open `carousel-asset-presentation-edit` dialog:
     - Featured item fields: `topLeftBadgeText`, `buttonLabel`, `assetTitle`, `shortDescription`, optional `subType`, `duration`, `meta1`, `meta2`, `tags`, and optional image overrides (`backgroundImageDesktop/Tablet/Mobile`, `featureImageDesktop/Tablet/Mobile`).
-    - Header item fields: `title`, `subtitle`, `ctaLabel`, `ctaHref`, optional `overlayOpacity`.
+    - Header item fields: `title`, `subtitle`, `ctaLabel`, `ctaUrl`, optional `overlayOpacity`.
     - Values are saved into `presentationJson` (stringified). Empty fields mean "use defaults from Asset".
 
 - Compatibility:
@@ -161,6 +161,14 @@ This document outlines the changes required in the Angular frontend to support f
   - Admin complexity (Phase 2+): Type-specific config/presentation forms add UI surface, but they are optional.
 
 - BE-only change impact on current FE: The current FE ignores unknown fields. If BE alone is upgraded, FE keeps working and will render all carousels using the legacy `lot-carousel` presentation. New types won’t get their specialized visuals until FE is updated to branch by `type`.
+
+## Status (2025-09-19)
+
+- Promo page now renders all V2 carousels through a single `lot-carousel-wrapper` per category, selecting `Standard`, `Grid`, `Featured`, or `Header` based on `carousel.type`.
+- Unified pause is implemented via `AssetModalService.uiPlayback$` and propagated through the wrapper to child carousels; Featured also pauses on hover.
+- Duplicate key warnings were addressed by tracking list items by `assetId` in Standard and Grid.
+- Landing page is pending the same wrapper adoption.
+- Phase 5 cleanup (removal of `isBookCarousel`) remains TODO after Landing migration.
 
 ## Asset Reuse Mapping (defaults and fallbacks)
 

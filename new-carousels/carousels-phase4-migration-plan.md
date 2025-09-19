@@ -196,3 +196,9 @@ Template (partial):
 - Legacy carousels continue to appear with the existing `lot-carousel`.
 - Config and per-item presentation overrides take effect.
 - No new routes are introduced.
+
+## Status (2025-09-19)
+
+- Promo page: Integrated via a single `lot-carousel-wrapper` that renders `Standard`, `Grid`, `Featured`, and `Header` by `carousel.type`. No new routes added.
+- Unified pause: Implemented and propagated from `AssetModalService.uiPlayback$` through the wrapper to child carousels.
+- Landing page: Pending adoption of the same wrapper pattern.

@@ -1,23 +1,23 @@
 # Phase 3 — Add "Group" as a New Carousel Type
 
 Owner: FE/BE team (lead: CTO)
-Status: Planned
+Status: Deferred
 Date: 2025-09-18
 
 Goal: Introduce a new carousel type, `Group`, enabling Admins to curate groups of assets/categories rendered by a simple grid/list FE component. Ensure full E2E support across DB → API → Admin → FE mapper → FE component.
+
+Decision (2025-09-19): Do NOT add `Group` to `CarouselType` at this time. Keep the `asset-group` component as a reusable section (not a carousel). Mapper helpers (`buildAssetGroup`, `getAssetGroupConfig`, `mapAssetGroup`) remain available for optional use, but we will not wire Group as a first-class carousel type.
 
 ## Context
 - Existing FE already contains an `asset-group` component (`shared/components/carousels/asset-group/asset-group.component.*`) and mapper helpers (`buildAssetGroup`, `getAssetGroupConfig`, `mapAssetGroup`).
 - The BE currently does not expose a `CarouselType.Group` in `CarouselType.cs` (to be confirmed), and Admin likely lacks Group-specific editing UI.
 
-## BE Scope
-- Add `Group` to `LoT.DataModels.Enums.CarouselType` enum.
-- Ensure `CarouselEntity` supports `ConfigJson` as needed.
-- API: `CategoryController` landing/promo payloads should return Group carousels alongside existing types.
-- Migration: If enum change requires DB data updates or seeds (new carousels), create a migration.
+## BE Scope (Deferred)
+- Do not add `Group` to the backend `CarouselType` enum for now.
+- No DB/DTO changes required at this stage.
 
-## Admin Scope
-- Admin edit UI should allow creating/editing `Group` carousels:
+## Admin Scope (Deferred)
+- No Admin changes. If we reintroduce Group later, revisit:
   - Name, Description, Type=Group
   - Item management: select assets to include (or categories, if we define group-of-categories)
   - Optional `ConfigJson` for presentation, e.g.:
@@ -30,29 +30,20 @@ Goal: Introduce a new carousel type, `Group`, enabling Admins to curate groups o
     }
     ```
 
-## FE Scope
-- Models: ensure `carousels-v2.ts` has an `AssetGroupItem` and `AssetGroupConfig` (already present).
-- Mapper: ensure `CarouselsDataMapperService` maps Group items from the API categories (already has `mapAssetGroup`/`buildAssetGroup`).
-- Component: ensure `asset-group` component can be fed by `buildAssetGroup` outputs and styled consistently with Tailwind overrides.
-- Pages: Landing/Promo integrate Group carousels by detecting `CarouselType.Group` in categories and rendering the component.
+## FE Scope (Adjusted)
+- Keep `AssetGroupItem` and `AssetGroupConfig` in `carousels-v2.ts`.
+- Mapper: keep `buildAssetGroup` and related helpers for optional use by pages.
+- Component: `asset-group` remains available as a section component (not driven by `Carousel.Type`).
+- Pages: Do not integrate Group as a `CarouselType`. If needed, a page can explicitly render `asset-group` using mapper outputs.
 
-## One-Change-One-Commit Backlog (Phase 3)
-- [ ] P3-C01: Add `Group` to `CarouselType` enum (BE)
-- [ ] P3-C02: Update any BE DTO mapping to pass through Type=Group (Category/Carousel DTOs)
-- [ ] P3-C03: Add migration if needed (seed a sample Group carousel for test)
-- [ ] P3-C04: Admin UI — enable selecting Type=Group in carousel creation/edit
-- [ ] P3-C05: Admin UI — implement Group item management UI (choose assets)
-- [ ] P3-C06: FE — verify/extend mapper to detect and map Group carousels (use `buildAssetGroup`)
-- [ ] P3-C07: FE — ensure `asset-group` component accepts mapper outputs and renders
-- [ ] P3-C08: Pages — inject Group component when present in Landing/Promo payloads
-- [ ] P3-C09: E2E verification with real payload (landing + promo)
-- [ ] P3-C10: Documentation updates (screenshots/payload examples)
+## One-Change-One-Commit Backlog (Deferred)
+- [x] Decision: Keep `asset-group` as a section, not a `CarouselType` (no BE enum change).
+- [ ] Optional: Document example usage of `asset-group` as a non-carousel section on pages (future doc card).
+- [ ] Optional: Visual polish and a11y review of `asset-group` styles (future).
 
-## Definition of Done (DoD)
-- API returns Group carousels in `GET /api/Category/Landing` and `GET /api/Category/Promo` when configured.
-- Admin can fully manage Group carousels (create/edit, add/remove items, save config).
-- FE maps Group carousels into `AssetGroupItem[]` + `AssetGroupConfig` and renders them.
-- QA passes on both Landing and Promo pages with at least one live Group carousel.
+## Definition of Done (DoD) — Deferred scenario
+- `asset-group` component remains available for optional use by pages via mapper outputs.
+- No changes to API or Admin are required at this time.
 
 ## Risks & Mitigations
 - **Enum change + DB**: Confirm DB doesn’t store enum as integer with implicit values. If so, verify ordering and add migration carefully.

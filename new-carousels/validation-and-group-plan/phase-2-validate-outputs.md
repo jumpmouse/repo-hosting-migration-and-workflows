@@ -91,6 +91,45 @@ Goal: Inventory and validate all clickable outputs for the four V2 carousels and
 
 ---
 
+# Execution Order Update
+- First: Phase 2b (template/handler fixes)
+- Then: Phase 2c (make V2 carousels work as intended: Header, Featured)
+- Then: Phase 4 (content correctness: titles/subtitles)
+- Finally: Phase 2a (wrapper orchestration)
+
+# Phase 2c — Ensure V2 Carousels Work as Intended (Header, Featured)
+
+Goal: Stabilize Header and Featured so they function like Standard/Grid do today. Fix non-advancing slides, duplicate backgrounds, broken clicks, and ensure autoplay/navigation works.
+
+## Preliminary Findings
+- **Header**
+  - Only a single slide is rendered because mapper maps only the first asset (see `mapHeaderSlidesFromCarousel()`).
+  - Bootstrap data-attribute anchors (`data-bs-toggle`, `href="#"`) exist; should be Angular `(click)` handlers.
+  - `slideConfig` is created with property initializers referencing `@Input()` values; move to `ngOnInit` or `ngOnChanges` to respect actual inputs.
+  - Background image is an absolutely positioned `.image` div; verify no duplicate backgrounds inherited from parents.
+- **Featured**
+  - Background image is always desktop in template; should be responsive; use `getResponsiveBackgroundImage()`.
+  - Swiper initialization is present but verify autoplay/slide controls actually apply.
+  - Titles use fallback (`deriveTitle`); this is a Phase 4 concern, but functionally we can proceed.
+
+## Header Plan (P2c-H)
+- [ ] P2c-H01: Mapper — map ALL `headerCarousel.assets` into `HeaderCarouselItem[]` (currently only first asset). Use `presentationJson` overrides.
+- [ ] P2c-H02: Component — replace Bootstrap anchors with Angular `(click)` handlers and expose `@Output() playClick`, `@Output() moreInfoClick` with index.
+- [ ] P2c-H03: Component — build `slideConfig` from `@Input()` values in `ngOnInit` (or `ngOnChanges`) so Slick respects Promo-provided config.
+- [ ] P2c-H04: Visual — confirm no duplicate background layers; adjust CSS if needed.
+- [ ] P2c-H05: Wire Promo handlers to `playClick`/`moreInfoClick` (temporary until wrapper in 2a).
+
+## Featured Plan (P2c-F)
+- [ ] P2c-F01: Template — use `getResponsiveBackgroundImage()` in `featured-assets.component.html` to set background based on viewport.
+- [ ] P2c-F02: Verify Swiper autoplay starts and slides advance; ensure params applied after initialize.
+- [ ] P2c-F03: Keep watchClick wired; More Info will be added in Phase 2b if required by UX parity.
+- [ ] P2c-F04: Fix any console errors on click or navigation.
+
+## DoD (2c)
+- Header advances through multiple assets with correct autoplay and Angular click handlers.
+- Featured advances correctly and displays a responsive background image without duplication.
+- No broken clicks or unexpected navigation; no Bootstrap data-attributes left.
+
 # Phase 2a — CarouselWrapperComponent (Container)
 
 Goal: Centralize carousel event wiring, modal opening, and primary-action routing so pages like Promo stay thin and any future pages can reuse a single, consistent orchestration layer.

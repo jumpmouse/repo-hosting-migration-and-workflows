@@ -78,3 +78,18 @@
 - Standard shows/hides info panel per config; slidesPerView matches Admin defaults.
 - Grid shows correct icon/button labels based on `assetType`.
 - Header and Featured autoplay/loop settings function as configured.
+
+## Status (2025-09-19)
+
+- Fixed
+  - Standard/Grid: duplicate key warnings resolved by tracking items with `assetId` instead of `title` in `@for` templates.
+  - Unified pause/resume implemented via `AssetModalService.uiPlayback$` and propagated to Header/Featured/Standard.
+  - Promo integration uses a single wrapper (`lot-carousel-wrapper`) to orchestrate `Standard`, `Grid`, `Featured`, and `Header` by `Carousel.Type`.
+
+- Pending
+  - Landing page to adopt the same wrapper orchestration pattern.
+  - Phase 5 cleanup: remove `isBookCarousel` after Landing migration.
+  - Grid `assetType` binding via wrapper (ensures button/icon labels) — verify and wire if missing.
+
+- Asset Group
+  - Decision: keep `asset-group` as a reusable section (not a `CarouselType`). Do not add `Group` to the enum at this time. Mapper helpers remain available for optional usage.

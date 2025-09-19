@@ -86,10 +86,16 @@ Links: [Frontend plan](./new-carousels-fe-plan.md), [Phase 2 report](./carousels
   - Apply `PresentationJson` overrides when present.
 
  - QA
-   - Responsive checks (mobile/tablet/desktop), performance, accessibility, and regression on legacy pages (no route changes).
+  - Responsive checks (mobile/tablet/desktop), performance, accessibility, and regression on legacy pages (no route changes).
 
- - Acceptance criteria
-   - New types render correctly with defaults on existing Promo and Landing pages; legacy behavior remains unchanged for legacy carousels.
+- Acceptance criteria
+  - New types render correctly with defaults on existing Promo and Landing pages; legacy behavior remains unchanged for legacy carousels.
+
+### Status (2025-09-19)
+
+- Promo page: DONE via a single `lot-carousel-wrapper` per category that orchestrates all V2 types (`Standard`, `Grid`, `Featured`, `Header`).
+- Unified pause: Implemented using `AssetModalService.uiPlayback$` and propagated through the wrapper to child carousels.
+- Landing page: PENDING similar wrapper adoption.
 
 ---
 
